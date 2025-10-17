@@ -769,11 +769,6 @@ async def get_index(credentials: HTTPBasicCredentials = Depends(security)):
 - `.env.example` - Template for .env file
 - `system-prompt.txt` - AI system prompt
 
-### Documentation
-
-- `README.md` - This file (complete documentation)
-- `QUICK-START.md` - Quick reference card
-
 ---
 
 ## License
