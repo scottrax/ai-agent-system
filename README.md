@@ -36,6 +36,8 @@ A complete AI-powered computer agent that lets you control your Ubuntu server th
 
 Deploy everything in one command on a fresh Ubuntu server:
 
+Place all files into a folder named "ai-agent-system"
+
 ```bash
 cd ~/ai-agent-system
 ./deploy.sh
@@ -128,14 +130,12 @@ AI_MODEL=claude-sonnet-4-5
 
 **Available models:**
 - `claude-sonnet-4-5` - Latest Claude Sonnet (recommended, best quality)
-- `claude-3-5-sonnet-20240620` - Claude 3.5 Sonnet (stable, widely available)
-- `claude-3-opus-20240229` - Claude 3 Opus (most capable)
-- `claude-3-sonnet-20240307` - Claude 3 Sonnet (balanced)
-- `claude-3-haiku-20240307` - Claude 3 Haiku (fastest, cheapest)
+- `claude-sonnet-3-5` - Claude 3.5 Sonnet (stable)
+- `claude-haiku-4-5` - Claude 4 Haiku (fastest, cheapest)
 
 **To change the model:**
 1. Edit `.env` file: `nano .env`
-2. Change or add: `AI_MODEL=claude-3-haiku-20240307`
+2. Change or add: `AI_MODEL=claude-haiku-4-5`
 3. Restart: `sudo systemctl restart ai-agent-web`
 
 #### Server Settings
@@ -172,34 +172,6 @@ cd ~/ai-agent-system
 nano system-prompt.txt
 ```
 
-**Example customizations:**
-
-Make it more concise:
-```
-You are a system administrator AI. Execute commands efficiently. Use sudo when needed.
-```
-
-Add security restrictions:
-```
-You are an AI assistant with full access to a Linux Ubuntu server.
-
-RESTRICTIONS:
-- Never delete files in /etc or /var without explicit confirmation
-- Always backup before modifying system files
-- Ask before running commands that affect network configuration
-```
-
-Add domain expertise:
-```
-You are an AI assistant specialized in web server management on Ubuntu.
-
-Focus areas:
-- nginx/apache configuration
-- SSL/TLS certificate management
-- Performance optimization
-- Security hardening
-```
-
 #### Apply Changes
 
 After editing `system-prompt.txt`:
@@ -214,13 +186,8 @@ The new prompt takes effect immediately.
 
 **Cost Optimization** - Use cheaper models:
 ```bash
-AI_MODEL=claude-3-haiku-20240307
+AI_MODEL=claude-haiku-4-5
 ```
-
-**Quality vs Speed:**
-- `claude-sonnet-4-5` - Best quality, slower, more expensive
-- `claude-3-haiku-20240307` - Fast, cheap, good for simple tasks
-- `claude-3-5-sonnet-20240620` - Balanced option
 
 **Test Configuration:**
 ```bash
@@ -233,9 +200,7 @@ python agent.py  # CLI mode to test
 
 ## Email Agent Setup
 
-Control your server by sending emails from your phone or computer!
-
-### Quick Start (5 Minutes)
+Control your server by sending emails from your phone or computer:
 
 ```bash
 # 1. Configure .env
@@ -255,6 +220,7 @@ python email_server.py
 # 3. Send test email to myserver2025@gmail.com from your.real.email@gmail.com
 # Wait 15-30 seconds for reply
 ```
+### Highly recommended to create a dedicated email address for your server!
 
 ### How It Works
 
@@ -810,65 +776,6 @@ async def get_index(credentials: HTTPBasicCredentials = Depends(security)):
 
 ---
 
-## Architecture
-
-```
-┌─────────────────┐
-│   User Input    │
-│ (Web/Email/CLI) │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   FastAPI       │
-│   WebSocket     │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   AI Agent      │
-│  (Claude API)   │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   Tool Layer    │
-│  (5 tools)      │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Ubuntu System  │
-│  (bash, files)  │
-└─────────────────┘
-```
-
----
-
 ## License
 
 MIT License - Use freely for personal or commercial projects.
-
----
-
-## Credits
-
-Built with:
-- [Anthropic Claude](https://www.anthropic.com/) - AI model
-- [FastAPI](https://fastapi.tiangolo.com/) - Web framework
-- [Uvicorn](https://www.uvicorn.org/) - ASGI server
-- [Python-Dotenv](https://github.com/theskumar/python-dotenv) - Environment management
-
----
-
-## Support
-
-For issues or questions:
-1. Check the [Troubleshooting](#troubleshooting) section
-2. Review conversation logs: `~/ai-agent-logs/`
-3. Check service status: `sudo systemctl status ai-agent-web`
-4. Test in CLI mode: `python agent.py`
-
----
-
-**That's it! You now have a complete AI-powered server agent. Ask it to do anything!**
