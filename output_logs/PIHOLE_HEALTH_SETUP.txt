@@ -1,0 +1,79 @@
+========================================
+Pi-hole Health Check Setup Instructions
+========================================
+
+IMPORTANT: Gmail App Password Required
+---------------------------------------
+
+The health check script is ready but needs a Gmail App Password to send emails.
+
+Steps to complete setup:
+
+1. Generate Gmail App Password:
+   - Go to: https://myaccount.google.com/apppasswords
+   - Sign in to jupiterserver45@gmail.com
+   - Select "Mail" and "Other (Custom name)"
+   - Name it: "Pi-hole Health Monitor"
+   - Click "Generate"
+   - Copy the 16-character password (no spaces)
+
+2. Add the App Password to msmtp config:
+   
+   Edit: ~/.msmtprc
+   
+   Replace the line:
+   password       NEEDS_APP_PASSWORD
+   
+   With:
+   password       YOUR_16_CHAR_APP_PASSWORD
+   
+   Command to edit:
+   nano ~/.msmtprc
+   
+   Make sure the file stays with permissions 600 (secure)
+
+3. Test email sending:
+   
+   echo "Test from Pi-hole health monitor" | mail -s "Test Email" skitles1994@gmail.com
+   
+   Check if the email arrives at skitles1994@gmail.com
+
+4. Test the health check script manually:
+   
+   ~/ai-agent-system/pihole-health-check.sh
+   
+   Then check the log:
+   cat ~/ai-agent-system/pihole-health.log
+
+5. The cron job is already installed and will run every 5 minutes
+
+Files Created:
+--------------
+- Health Check Script: ~/ai-agent-system/pihole-health-check.sh
+- msmtp Config: ~/.msmtprc (needs App Password)
+- State File: ~/ai-agent-system/.pihole_health_state
+- Log File: ~/ai-agent-system/pihole-health.log
+- This Guide: ~/ai-agent-system/PIHOLE_HEALTH_SETUP.txt
+
+Alert Behavior:
+---------------
+- Checks run every 5 minutes
+- Email sent when issue first detected
+- Email sent when issue recovers
+- No spam - won't send repeated emails for ongoing issues
+- Logs all checks for review
+
+Health Checks Performed:
+------------------------
+1. pihole-FTL service running
+2. FTL listening on port 53
+3. DNS resolution functionality
+4. Pi-hole command responsiveness
+5. Gravity database integrity
+6. FTL memory usage
+7. Disk space availability
+
+From: jupiterserver45@gmail.com
+To: skitles1994@gmail.com
+
+========================================

@@ -1,0 +1,119 @@
+================================================================
+PI-HOLE HEALTH MONITOR - INSTALLATION COMPLETE
+================================================================
+
+SYSTEM OVERVIEW
+---------------
+Monitor: Pi-hole Service Health Check
+Frequency: Every 5 minutes (via cron)
+From: jupiterserver45@gmail.com
+To: skitles1994@gmail.com
+Host: jup-ubu
+
+STATUS
+------
+[✓] Health check script installed and tested
+[✓] Cron job configured (runs every 5 minutes)
+[✓] Email system (msmtp) installed
+[!] REQUIRES: Gmail App Password configuration
+
+NEXT STEP - COMPLETE EMAIL SETUP
+---------------------------------
+You must add a Gmail App Password for emails to work.
+
+QUICK SETUP (Recommended):
+  Run this interactive script:
+    ~/ai-agent-system/setup-gmail-password.sh
+
+MANUAL SETUP:
+  1. Get App Password from: https://myaccount.google.com/apppasswords
+     - Sign in as: jupiterserver45@gmail.com
+     - Create app: "Pi-hole Health Monitor"
+     - Copy 16-character password
+  
+  2. Edit config:
+     nano ~/.msmtprc
+     
+     Change this line:
+     password       NEEDS_APP_PASSWORD
+     
+     To:
+     password       your_16_char_password
+  
+  3. Test:
+     echo "Test" | mail -s "Test Email" skitles1994@gmail.com
+
+FILES CREATED
+-------------
+Health Script:     ~/ai-agent-system/pihole-health-check.sh
+Email Config:      ~/.msmtprc (chmod 600)
+State File:        ~/ai-agent-system/.pihole_health_state
+Log File:          ~/ai-agent-system/pihole-health.log
+Setup Helper:      ~/ai-agent-system/setup-gmail-password.sh
+Instructions:      ~/ai-agent-system/PIHOLE_HEALTH_SETUP.txt
+This Summary:      ~/ai-agent-system/PIHOLE_MONITOR_SUMMARY.txt
+
+CRON JOB
+--------
+*/5 * * * * /home/scottrax/ai-agent-system/pihole-health-check.sh
+
+View cron jobs:
+  crontab -l
+
+HEALTH CHECKS PERFORMED
+-----------------------
+1. [CRITICAL] pihole-FTL service running
+2. [CRITICAL] FTL listening on port 53 (DNS)
+3. [CRITICAL] DNS resolution functionality
+4. [WARNING]  Pi-hole command responsiveness
+5. [CRITICAL] Gravity database integrity
+6. [WARNING]  FTL memory usage (>50%)
+7. [WARNING]  Disk space (<90% full)
+
+ALERT BEHAVIOR
+--------------
+• Email sent when problem first detected
+• Email sent when problem resolves
+• No spam - won't repeat emails for ongoing issues
+• All checks logged to pihole-health.log
+
+MONITORING & LOGS
+-----------------
+View real-time log:
+  tail -f ~/ai-agent-system/pihole-health.log
+
+View current state:
+  cat ~/ai-agent-system/.pihole_health_state
+
+Manual test run:
+  ~/ai-agent-system/pihole-health-check.sh
+
+Check msmtp status:
+  cat ~/.msmtp.log
+
+CURRENT STATUS
+--------------
+Last Test: Pi-hole health checks all passing (OK)
+Email: Not configured (needs Gmail App Password)
+Cron: Active and running
+
+TROUBLESHOOTING
+---------------
+Email not working:
+  • Check ~/.msmtp.log for errors
+  • Verify App Password is correct
+  • Test: echo "test" | mail -s "test" skitles1994@gmail.com
+
+Health check issues:
+  • Run manually: ~/ai-agent-system/pihole-health-check.sh
+  • Check log: tail ~/ai-agent-system/pihole-health.log
+  • Verify Pi-hole: pihole status
+
+Cron not running:
+  • Check service: systemctl status cron
+  • View cron jobs: crontab -l
+  • Check system mail: mail
+
+================================================================
+TO COMPLETE SETUP: Run ~/ai-agent-system/setup-gmail-password.sh
+================================================================

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Computer Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #header {
+            background: #161b22;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .provider-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .provider-selector label {
+            color: #8b949e;
+            font-weight: 500;
+        }
+
+        .provider-selector select {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            color: #c9d1d9;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            min-width: 120px;
+        }
+
+        .provider-selector select:focus {
+            border-color: #1f6feb;
+            outline: none;
+        }
+
+        .provider-selector select:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .provider-selector button {
+            padding: 0.25rem 0.75rem;
+            background: #238636;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .provider-selector button:hover:not(:disabled) {
+            background: #2ea043;
+        }
+
+        .provider-selector button:disabled {
+            background: #21262d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        #header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #3fb950;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-dot.disconnected {
+            background: #f85149;
+            animation: none;
+        }
+
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            max-width: 80%;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .user {
+            background: #1f6feb;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .agent {
+            background: #161b22;
+            border: 1px solid #30363d;
+            align-self: flex-start;
+        }
+
+        .system {
+            background: #1a7f37;
+            color: white;
+            align-self: center;
+            text-align: center;
+            font-size: 0.875rem;
+            max-width: 60%;
+        }
+
+        .error {
+            background: #f85149;
+            color: white;
+            align-self: center;
+            max-width: 80%;
+        }
+
+        .processing {
+            background: #161b22;
+            border: 1px solid #30363d;
+            align-self: flex-start;
+            color: #8b949e;
+            font-style: italic;
+        }
+
+        #input-area {
+            padding: 1rem 1.5rem;
+            background: #161b22;
+            border-top: 1px solid #30363d;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        #input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #c9d1d9;
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #input:focus {
+            border-color: #1f6feb;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background: #238636;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            background: #2ea043;
+        }
+
+        button:disabled {
+            background: #21262d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        #reset-btn {
+            background: #21262d;
+            padding: 0.75rem 1rem;
+        }
+
+        #reset-btn:hover:not(:disabled) {
+            background: #30363d;
+        }
+
+        /* Scrollbar styling */
+        #messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #messages::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+
+        #messages::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 4px;
+        }
+
+        #messages::-webkit-scrollbar-thumb:hover {
+            background: #484f58;
+        }
+
+        .timestamp {
+            font-size: 0.75rem;
+            color: #8b949e;
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .message {
+                max-width: 90%;
+            }
+            
+            #input-area {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+
+            .header-controls {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-end;
+            }
+
+            .provider-selector {
+                flex-wrap: wrap;
+                gap: 0.25rem;
+            }
+
+            .provider-selector select {
+                min-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>
+            <span>🤖</span>
+            <span>AI Computer Agent</span>
+        </h1>
+        <div class="header-controls">
+            <div class="provider-selector">
+                <label for="provider-select">Provider:</label>
+                <select id="provider-select" disabled>
+                    <option value="">Loading...</option>
+                </select>
+                <label for="model-select">Model:</label>
+                <select id="model-select" disabled>
+                    <option value="">Select provider first</option>
+                </select>
+                <button id="switch-provider-btn" disabled>Switch</button>
+            </div>
+            <div class="status">
+                <div class="status-dot disconnected" id="status-dot"></div>
+                <span id="status-text">Connecting...</span>
+            </div>
+        </div>
+    </div>
+    
+    <div id="messages"></div>
+    
+    <div id="input-area">
+        <button id="reset-btn" title="Reset conversation">Reset</button>
+        <input type="text" id="input" placeholder="Ask your AI to do something on the server..." disabled />
+        <button id="send" disabled>Send</button>
+    </div>
+
+    <script>
+        let ws = null;
+        let sessionId = null;
+        let isConnected = false;
+        let availableProviders = {};
+        let currentProviderInfo = null;
+        
+        const messages = document.getElementById('messages');
+        const input = document.getElementById('input');
+        const sendBtn = document.getElementById('send');
+        const resetBtn = document.getElementById('reset-btn');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        const providerSelect = document.getElementById('provider-select');
+        const modelSelect = document.getElementById('model-select');
+        const switchProviderBtn = document.getElementById('switch-provider-btn');
+
+        async function loadProviders() {
+            try {
+                const response = await fetch('/api/providers');
+                const data = await response.json();
+                availableProviders = data.providers;
+                populateProviderSelect();
+            } catch (error) {
+                console.error('Failed to load providers:', error);
+            }
+        }
+
+        function populateProviderSelect() {
+            providerSelect.innerHTML = '<option value="">Select Provider</option>';
+            modelSelect.innerHTML = '<option value="">Select provider first</option>';
+            
+            Object.entries(availableProviders).forEach(([key, provider]) => {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = `${provider.name} ${provider.available ? '' : '(Not Available)'}`;
+                option.disabled = !provider.available;
+                providerSelect.appendChild(option);
+            });
+        }
+
+        function updateModelSelect(providerKey) {
+            modelSelect.innerHTML = '<option value="">Select Model</option>';
+            
+            if (providerKey && availableProviders[providerKey]) {
+                const provider = availableProviders[providerKey];
+                provider.models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model;
+                    option.textContent = model;
+                    modelSelect.appendChild(option);
+                });
+                modelSelect.disabled = false;
+            } else {
+                modelSelect.disabled = true;
+            }
+        }
+
+        async function switchProvider() {
+            const provider = providerSelect.value;
+            const model = modelSelect.value;
+            
+            if (!provider) {
+                addMessage('Please select a provider', 'error');
+                return;
+            }
+            
+            if (!isConnected) {
+                addMessage('Not connected to server', 'error');
+                return;
+            }
+            
+            try {
+                switchProviderBtn.disabled = true;
+                switchProviderBtn.textContent = 'Switching...';
+                
+                const command = model ? `/switch ${provider} ${model}` : `/switch ${provider}`;
+                ws.send(command);
+            } catch (error) {
+                console.error('Failed to switch provider:', error);
+                addMessage('Failed to switch provider', 'error');
+                switchProviderBtn.disabled = false;
+                switchProviderBtn.textContent = 'Switch';
+            }
+        }
+
+        function connect() {
+            statusDot.classList.add('disconnected');
+            statusText.textContent = 'Connecting...';
+            
+            // Use the current hostname instead of hardcoded localhost
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                isConnected = true;
+                statusDot.classList.remove('disconnected');
+                statusText.textContent = 'Connected';
+                input.disabled = false;
+                sendBtn.disabled = false;
+                resetBtn.disabled = false;
+                providerSelect.disabled = false;
+                switchProviderBtn.disabled = false;
+                input.focus();
+            };
+
+            ws.onclose = () => {
+                isConnected = false;
+                statusDot.classList.add('disconnected');
+                statusText.textContent = 'Disconnected';
+                input.disabled = true;
+                sendBtn.disabled = true;
+                resetBtn.disabled = true;
+                providerSelect.disabled = true;
+                switchProviderBtn.disabled = true;
+                
+                // Try to reconnect after 3 seconds
+                setTimeout(() => {
+                    statusText.textContent = 'Reconnecting...';
+                    connect();
+                }, 3000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                addMessage('Connection error. Please refresh the page.', 'error');
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'message') {
+                    addMessage(data.content, 'agent');
+                    sendBtn.disabled = false;
+                    input.disabled = false;
+                    input.focus();
+                } else if (data.type === 'system') {
+                    addMessage(data.content, 'system');
+                    
+                    // Update provider info if available
+                    if (data.provider_info) {
+                        currentProviderInfo = data.provider_info;
+                        updateProviderDisplay();
+                    }
+                } else if (data.type === 'error') {
+                    addMessage(data.content, 'error');
+                    sendBtn.disabled = false;
+                    input.disabled = false;
+                    switchProviderBtn.disabled = false;
+                    switchProviderBtn.textContent = 'Switch';
+                } else if (data.type === 'status' && data.content === 'processing') {
+                    removeProcessingMessage();
+                    addMessage('Processing...', 'processing');
+                }
+            };
+        }
+
+        function addMessage(content, type) {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.textContent = content;
+            
+            const timestamp = document.createElement('div');
+            timestamp.className = 'timestamp';
+            timestamp.textContent = new Date().toLocaleTimeString();
+            div.appendChild(timestamp);
+            
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function removeProcessingMessage() {
+            const processingMsg = messages.querySelector('.processing');
+            if (processingMsg) {
+                processingMsg.remove();
+            }
+        }
+
+        function send() {
+            const text = input.value.trim();
+            if (!text || !isConnected) return;
+            
+            addMessage(text, 'user');
+            ws.send(text);
+            input.value = '';
+            sendBtn.disabled = true;
+            input.disabled = true;
+        }
+
+        function reset() {
+            if (!isConnected) return;
+            ws.send('reset');
+            messages.innerHTML = '';
+        }
+
+        function updateProviderDisplay() {
+            if (currentProviderInfo) {
+                // Update provider select to show current provider
+                providerSelect.value = currentProviderInfo.provider;
+                updateModelSelect(currentProviderInfo.provider);
+                
+                // Update model select to show current model
+                if (currentProviderInfo.model) {
+                    modelSelect.value = currentProviderInfo.model;
+                }
+                
+                // Update status text to show current provider
+                statusText.textContent = `Connected (${currentProviderInfo.provider})`;
+            }
+        }
+
+        sendBtn.onclick = send;
+        resetBtn.onclick = reset;
+        switchProviderBtn.onclick = switchProvider;
+        
+        providerSelect.onchange = () => {
+            updateModelSelect(providerSelect.value);
+        };
+        
+        input.onkeypress = (e) => {
+            if (e.key === 'Enter' && !sendBtn.disabled) {
+                send();
+            }
+        };
+
+        // Load providers and connect on load
+        loadProviders();
+        connect();
+    </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+SCOTTRAX SERVER ADMINISTRATION MEMORY LOG
+==========================================
+
+USER LOCATION & TIMEZONE
+- Primary timezone: Eastern Time (ET)
+- Currently observing EDT (UTC-4) from March-November, EST (UTC-5) from November-March
+- Server system timezone: UTC (Etc/UTC)
+- When scheduling tasks in UTC, remember: 5 PM ET = 9 PM UTC (EDT) or 10 PM UTC (EST)
+
+CRITICAL CRON JOBS
+==================
+
+1. MEDICATION REMINDER EMAIL
+   Script: /home/scottrax/send_medication_reminder.py
+   Schedule: 0 21 * * * (daily at 21:00 UTC = 5 PM ET during EDT)
+   Frequency: Every day at 5 PM Eastern Time
+   Action: Sends email reminder to skitles1994@gmail.com to take blood pressure medication
+   Config: Uses EMAIL_ADDRESS and EMAIL_PASSWORD from /home/scottrax/ai-agent-system/.env
+   SMTP: Gmail (smtp.gmail.com:587)
+   Status: ACTIVE
+   Note: Updated Oct 20, 2025 to fix timezone issue (was 17:00 UTC = 1 PM ET)
+
+2. PI-HOLE HEALTH CHECK
+   Script: /home/scottrax/ai-agent-system/pihole-health-check.sh
+   Schedule: */5 * * * * (every 5 minutes)
+   Frequency: Continuous monitoring
+   Action: Health check script for Pi-hole DNS service
+   Status: ACTIVE
+   Note: Runs every 5 minutes for system monitoring
+
+EMAIL CONFIGURATION
+===================
+Sender: Configured in /home/scottrax/ai-agent-system/.env
+Recipient: skitles1994@gmail.com
+Service: Gmail SMTP with TLS
+Authentication: Email/password stored in .env file (DO NOT COMMIT)
+Permissions: .env should be chmod 600
+
+SYSTEM INFORMATION
+==================
+OS: Ubuntu 24.04.3 LTS (noble)
+Kernel: 6.8.0-85-generic x86_64
+RAM: 31 GB (24 GB free at last check)
+Root disk: 23 GB total, 8.1 GB free (64% used)
+User: scottrax (UID 1000)
+Sudo access: Yes
+Groups: adm, cdrom, sudo, dip, plugdev, lxd
+
+SERVICES & MONITORING
+=====================
+- Pi-hole: Running with health checks every 5 minutes
+- NTP: Active and synchronized
+- Email sender: Python script managed via cron
+
+WORK DIRECTORIES
+================
+Main: /home/scottrax/ai-agent-system/
+- history/: Timestamped task logs
+- tmp/: Temporary files
+Config: /home/scottrax/.config/ai-agent/ (chmod 700, secrets location)
+
+IMPORTANT NOTES FOR FUTURE OPERATIONS
+=====================================
+1. Always check server timezone is UTC before scheduling tasks
+2. Convert user's ET time to UTC before creating cron entries
+3. Timezone conversion: add 4 hours for EDT, 5 hours for EST to get UTC
+4. Email credentials are in .env file, never log them
+5. Medication reminder is critical daily task - monitor cron logs
+6. Pi-hole health check is lightweight monitoring - can run frequently
+7. Server is 64% full on root disk - monitor space usage
+
+CREATED BY: AI Agent
+LAST UPDATED: 2025-10-20 01:56 UTC
+STATUS: All systems operational, timezone corrected

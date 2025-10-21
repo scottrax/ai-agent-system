@@ -1,0 +1,310 @@
+================================================================================
+PI-HOLE HEALTH MONITORING VIA CRON JOB - SETUP COMPLETE
+================================================================================
+
+TASK: Create a cron job that runs every 5 mins to check Pi-hole health
+      and send email alerts from jupiterserver45@gmail.com to 
+      skitles1994@gmail.com if issues are detected.
+
+STATUS: ✓ COMPLETE AND ACTIVE
+
+================================================================================
+CURRENT CONFIGURATION
+================================================================================
+
+CRON JOB:
+  Schedule: */5 * * * * (Every 5 minutes)
+  Script: /home/scottrax/ai-agent-system/pihole-health-check.sh
+  User: scottrax
+  Status: ACTIVE
+  Last Run: Just completed
+  Next Run: Every 5 minutes automatically
+
+PI-HOLE SERVICE:
+  Service: pihole-FTL.service
+  Status: ACTIVE and RUNNING (since 2025-10-17 23:11:22 UTC)
+  DNS Port: Listening on port 53 (UDP and TCP)
+  Health Status: ALL CHECKS PASSING
+
+EMAIL CONFIGURATION:
+  Sending From: jupiterserver45@gmail.com
+  Sending To: skitles1994@gmail.com
+  MTA: msmtp with Gmail SMTP
+  Config File: ~/.msmtprc (permissions: 600)
+  Status: Ready (requires App Password configuration)
+
+================================================================================
+HOW IT WORKS
+================================================================================
+
+Every 5 minutes, the cron job runs this health check which monitors:
+
+1. Pi-hole FTL Service Status
+   - Is the pihole-FTL.service running?
+   - Restarts detected and logged
+
+2. DNS Port Binding
+   - Is port 53 (DNS) listening?
+   - Both UDP and TCP checked
+
+3. DNS Resolution Test
+   - Can we resolve domains? (tests: dig @127.0.0.1 google.com)
+   - Validates functional DNS service
+
+4. Pi-hole Command
+   - Is the pi-hole CLI tool responsive?
+   - Checks: pihole status
+
+5. Web Interface Health
+   - If lighttpd is running, tests the admin panel
+   - Optional check for UI availability
+
+ALERT LOGIC:
+  - Alerts are sent ONLY when state changes from OK to FAILED
+  - This prevents spam from repeated failures
+  - Recovery emails sent when service returns to normal
+  - Each state change is logged with timestamp
+
+STATE TRACKING:
+  - State stored in: ~/ai-agent-system/pihole-alert-state
+  - Log entries written to: ~/ai-agent-system/pihole-health.log
+  - Alert history maintained for troubleshooting
+
+================================================================================
+IMPORTANT: CONFIGURE GMAIL APP PASSWORD
+================================================================================
+
+The cron job is active and running, but email alerts will NOT work until
+you configure the Gmail App Password. This is a ONE-TIME setup:
+
+RUN THIS COMMAND:
+  bash ~/ai-agent-system/setup-gmail-password.sh
+
+WHAT IT DOES:
+  1. Prompts you for your Gmail 16-character App Password
+  2. Updates ~/.msmtprc with the password securely
+  3. Sends a test email to verify everything works
+  4. You should see a test email arrive at skitles1994@gmail.com
+
+HOW TO GET THE APP PASSWORD:
+  1. Go to: https://myaccount.google.com/apppasswords
+  2. Sign in with: jupiterserver45@gmail.com
+  3. Select "Mail" and "Linux"
+  4. Google generates a 16-character password
+  5. Copy it and paste when the setup script asks
+
+================================================================================
+VERIFY THE SETUP
+================================================================================
+
+Check the status of the monitoring system:
+  bash ~/ai-agent-system/check-pihole-monitoring.sh
+
+This script validates:
+  ✓ Cron job is configured
+  ✓ Script is executable
+  ✓ Pi-hole service is running
+  ✓ Port 53 is listening
+  ✓ Email config exists
+  ✓ Health check log exists
+  ✓ Alert state tracking
+  ✓ DNS resolution works
+  ✓ Next scheduled execution time
+
+RECENT HEALTH CHECK LOG:
+  tail -f ~/ai-agent-system/pihole-health.log
+
+CURRENT ALERT STATE:
+  cat ~/ai-agent-system/pihole-alert-state
+  (Expected: "OK" when system is healthy)
+
+================================================================================
+MANUAL TESTING
+================================================================================
+
+RUN A HEALTH CHECK NOW:
+  bash ~/ai-agent-system/pihole-health-check.sh
+
+TEST DNS RESOLUTION:
+  dig @127.0.0.1 google.com
+
+CHECK PI-HOLE SERVICE:
+  systemctl status pihole-FTL.service
+
+CHECK PORT 53:
+  sudo ss -tulpen | grep :53
+
+TEST EMAIL (after app password is set):
+  echo -e "Subject: Test\n\nTest message" | msmtp -a gmail skitles1994@gmail.com
+
+================================================================================
+SIMULATE AN ALERT (For Testing)
+================================================================================
+
+To verify alerts work after setting the Gmail password:
+
+1. Stop the pi-hole service:
+   sudo systemctl stop pihole-FTL.service
+
+2. Wait for the next cron execution (max 5 minutes)
+
+3. Check your email at skitles1994@gmail.com for an alert
+
+4. Restart pi-hole:
+   sudo systemctl start pihole-FTL.service
+
+5. Wait for the next cron execution to receive a "recovered" email
+
+================================================================================
+FILES AND LOCATIONS
+================================================================================
+
+Health Check Script:
+  ~/ai-agent-system/pihole-health-check.sh
+
+Health Check Log:
+  ~/ai-agent-system/pihole-health.log
+
+Alert State File:
+  ~/ai-agent-system/pihole-alert-state
+
+Email Configuration:
+  ~/.msmtprc (contains Gmail app password - secure permissions 600)
+
+Email Log:
+  ~/.msmtp.log
+
+Monitoring Status Check:
+  ~/ai-agent-system/check-pihole-monitoring.sh
+
+Setup Documentation:
+  ~/ai-agent-system/PIHOLE_CRON_SETUP.md
+  ~/ai-agent-system/PIHOLE_MONITORING_COMPLETE.txt (this file)
+
+Cron Job:
+  crontab -l (view with this command)
+
+================================================================================
+TROUBLESHOOTING QUICK REFERENCE
+================================================================================
+
+ISSUE: Email alerts not received
+FIX: Run setup script: bash ~/ai-agent-system/setup-gmail-password.sh
+
+ISSUE: Service shows as failed in checks
+CHECK: systemctl status pihole-FTL.service
+
+ISSUE: Port 53 not listening
+CHECK: sudo ss -tulpen | grep :53
+FIX: sudo systemctl restart pihole-FTL.service
+
+ISSUE: DNS resolution failing
+TEST: dig @127.0.0.1 google.com
+CHECK: systemctl status pihole-FTL.service
+LOGS: pihole -t
+
+ISSUE: Cron job not running
+CHECK: crontab -l (should show the job)
+LOGS: grep CRON /var/log/syslog | tail -20
+
+ISSUE: msmtp password error
+LOG: cat ~/.msmtp.log
+FIX: Run: bash ~/ai-agent-system/setup-gmail-password.sh
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. REQUIRED - Configure Gmail App Password:
+   bash ~/ai-agent-system/setup-gmail-password.sh
+
+2. VERIFY - Check that everything is working:
+   bash ~/ai-agent-system/check-pihole-monitoring.sh
+
+3. TEST - Simulate a failure to verify alerts work (optional):
+   sudo systemctl stop pihole-FTL.service
+   # Wait for next cron run (max 5 minutes)
+   # Check email for alert
+   sudo systemctl start pihole-FTL.service
+   # Wait for recovery email
+
+4. MONITOR - Keep an eye on the logs:
+   tail -f ~/ai-agent-system/pihole-health.log
+
+================================================================================
+SECURITY NOTES
+================================================================================
+
+- The Gmail app password is stored in ~/.msmtprc with permissions 600
+  (readable only by your user - scottrax)
+- Never share or commit this file to version control
+- App passwords are more secure than your actual Gmail password
+- You can revoke app passwords anytime from your Google Account settings
+- The health check script runs with user privileges (no sudo required)
+- Only email alerts require elevated privileges (handled by msmtp)
+
+================================================================================
+CRON JOB DETAILS
+================================================================================
+
+To view the exact cron entry:
+  crontab -l | grep pihole
+
+To modify the cron schedule (if needed):
+  crontab -e
+  Find the line: */5 * * * * /home/scottrax/ai-agent-system/pihole-health-check.sh
+  
+  Cron syntax: minute hour day month weekday
+  
+  Examples:
+  */5 * * * *   = Every 5 minutes
+  */1 * * * *   = Every 1 minute  
+  0 * * * *     = Every hour
+  0 0 * * *     = Every day at midnight
+  0 */4 * * *   = Every 4 hours
+
+To check recent cron executions:
+  grep CRON /var/log/syslog | grep pihole | tail -20
+
+================================================================================
+SUPPORT RESOURCES
+================================================================================
+
+For detailed setup guide:
+  cat ~/ai-agent-system/PIHOLE_CRON_SETUP.md
+
+For monitoring status:
+  bash ~/ai-agent-system/check-pihole-monitoring.sh
+
+For email setup help:
+  cat ~/ai-agent-system/SETUP_GUIDE.md
+
+Pi-hole Documentation:
+  https://docs.pi-hole.net/
+
+Gmail App Passwords:
+  https://myaccount.google.com/apppasswords
+
+================================================================================
+SUMMARY
+================================================================================
+
+✓ Cron job configured to run every 5 minutes
+✓ Pi-hole health check script in place and executable
+✓ Email alert system configured (msmtp + Gmail)
+✓ Email addresses set correctly
+✓ State tracking implemented (no spam on repeated failures)
+✓ Health check log maintained at ~/ai-agent-system/pihole-health.log
+✓ Complete documentation provided
+
+REMAINING ACTION:
+  → Configure Gmail App Password (one-time setup)
+  → Run: bash ~/ai-agent-system/setup-gmail-password.sh
+  → Then alerts will be fully operational
+
+================================================================================
+Status Generated: 2025-10-19
+System: Ubuntu 24.04.3 LTS (Noble Numbat)
+Pi-hole FTL Status: ACTIVE (running since 2025-10-17)
+All Health Checks: PASSING
+================================================================================
