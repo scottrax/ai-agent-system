@@ -1,1 +1,0 @@
-0 17 * * * /usr/bin/python3 /home/scottrax/send_medication_reminder.py
