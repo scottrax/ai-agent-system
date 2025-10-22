@@ -14,7 +14,6 @@
 logs/
 *.log
 memories.txt
-pihole-alert-state
 
 # Python cache
 __pycache__/
