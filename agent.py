@@ -202,6 +202,25 @@ class AIAgent:
                     },
                     "required": ["path", "pattern", "search_type"]
                 }
+            },
+            {
+                "name": "switch_llm_provider",
+                "description": "Switch to a different LLM provider (anthropic, gemini, ollama). This changes which AI model is used for responses.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "provider": {
+                            "type": "string",
+                            "description": "The LLM provider to switch to",
+                            "enum": ["anthropic", "gemini", "ollama"]
+                        },
+                        "model": {
+                            "type": "string",
+                            "description": "Optional: specific model to use (e.g., 'claude-3-5-sonnet-20241022', 'gemini-2.0-flash-exp', 'llama3.1')"
+                        }
+                    },
+                    "required": ["provider"]
+                }
             }
         ]
     
@@ -363,6 +382,39 @@ class AIAgent:
                 self._log_to_actions(f"  Command: {cmd}\n")
                 self._log_to_actions(f"  Matches Found: {len(result.stdout.splitlines())}\n\n")
                 return output
+            
+            elif tool_name == "switch_llm_provider":
+                provider = tool_input["provider"]
+                model = tool_input.get("model")
+                
+                logger.info(f"Switching LLM provider to: {provider}")
+                try:
+                    self.switch_provider(provider, model)
+                    output = {
+                        "success": True,
+                        "provider": provider,
+                        "model": self.model,
+                        "message": f"Successfully switched to {provider}"
+                    }
+                    # Log to transcript
+                    self._log_to_transcript(f"TOOL: {tool_name}\n  Input: {json.dumps(tool_input)}\n  Result: {json.dumps(output)}\n")
+                    # Log to actions
+                    self._log_to_actions(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] LLM_SWITCH: {provider}\n")
+                    self._log_to_actions(f"  Model: {self.model}\n")
+                    self._log_to_actions(f"  Success: {output['success']}\n\n")
+                    return output
+                except Exception as e:
+                    output = {
+                        "success": False,
+                        "error": str(e),
+                        "message": f"Failed to switch to {provider}: {str(e)}"
+                    }
+                    # Log to transcript
+                    self._log_to_transcript(f"TOOL: {tool_name}\n  Input: {json.dumps(tool_input)}\n  Result: {json.dumps(output)}\n")
+                    # Log to actions
+                    self._log_to_actions(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] LLM_SWITCH_FAILED: {provider}\n")
+                    self._log_to_actions(f"  Error: {str(e)}\n\n")
+                    return output
         
         except subprocess.TimeoutExpired:
             return {"error": "Command timed out after 60 seconds"}
