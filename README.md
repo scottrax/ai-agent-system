@@ -44,6 +44,14 @@ tail -f ~/ai-agent-logs/$(ls -t ~/ai-agent-logs/ | head -1)
 
 See `LOGS.md` for complete logging documentation, including log format, rotation, and management.
 
+## Documentation
+
+- **[DEPLOY.md](DEPLOY.md)** - One-command deployment with interactive setup
+- **[EMAIL-SETUP.md](EMAIL-SETUP.md)** - Email control configuration and setup
+- **[LOGS.md](LOGS.md)** - Complete logging documentation and management
+- **[SYSTEMD-SETUP.md](SYSTEMD-SETUP.md)** - System service configuration and management
+- **[CHAT-HISTORY-FEATURE.md](CHAT-HISTORY-FEATURE.md)** - Chat history and sidebar functionality
+
 ## Quick Start
 
 ### 1. Upload to Your Ubuntu Server
