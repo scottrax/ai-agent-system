@@ -14,14 +14,14 @@ The interactive script handles installation, configuration, and setup automatica
 
 ## Features
 
-- 🤖 Natural language interface to your Linux server
-- 💬 Web-based chat interface
-- 📧 Email interface (send emails to control your server!)
-- 🖥️ Command-line interface option
-- 🔧 Execute bash commands, read/write files, search files
-- 🔐 Secure by default (email whitelist authentication)
-- 🚀 Easy deployment with systemd service
-- 💾 Conversation history maintained
+- Natural language interface to your Linux server
+- Web-based chat interface
+- Email interface (send emails to control your server!)
+- Command-line interface option
+- Execute bash commands, read/write files, search files
+- Secure by default (email whitelist authentication)
+- Easy deployment with systemd service
+- Conversation history maintained
 - **Comprehensive logging** - All interactions logged with timestamps
 
 ## Logging
@@ -153,10 +153,10 @@ cd ~/ai-agent-system
 ```
 
 This will:
-- ✅ Create systemd service files
-- ✅ Enable auto-start on boot
-- ✅ Configure auto-restart on failure (10 second delay)
-- ✅ Start the services immediately
+- Create systemd service files
+- Enable auto-start on boot
+- Configure auto-restart on failure (10 second delay)
+- Start the services immediately
 
 See `SYSTEMD-SETUP.md` for details and management commands.
 
@@ -224,7 +224,7 @@ Once running, you can ask your AI agent things like:
 
 ## Security Considerations
 
-⚠️ **Important Security Notes:**
+**Important Security Notes:**
 
 1. **API Key Protection**: Never commit your `.env` file to version control
 2. **Network Access**: The agent has full access to your server. Only expose to trusted networks.

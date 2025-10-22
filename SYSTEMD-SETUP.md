@@ -1,10 +1,10 @@
 # Systemd Setup - Auto-Start on Boot & Auto-Restart on Failure
 
 This guide shows you how to set up your AI agent to:
-- ✅ Start automatically on boot
-- ✅ Restart automatically on failure
-- ✅ Run in the background as a system service
-- ✅ Manage with standard systemd commands
+- Start automatically on boot
+- Restart automatically on failure
+- Run in the background as a system service
+- Manage with standard systemd commands
 
 ## Quick Setup (Recommended)
 
