@@ -89,18 +89,35 @@ class AIAgent:
                 f.write(self.system_prompt)
             logger.info(f"Created default system prompt at: {prompt_file}")
         
-        # Set up conversation log file
+        # Set up logging structure
         if log_file is None:
-            log_dir = Path.home() / "ai-agent-logs"
-            log_dir.mkdir(exist_ok=True)
-            log_file = log_dir / f"conversation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+            # Use project-relative logs directory
+            project_root = Path(__file__).parent
+            log_dir = project_root / "logs"
+            transcripts_dir = log_dir / "transcripts"
+            actions_dir = log_dir / "actions"
+            
+            # Create directories
+            transcripts_dir.mkdir(parents=True, exist_ok=True)
+            actions_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Set up log files
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            self.transcript_file = transcripts_dir / f"conversation_{timestamp}.log"
+            self.actions_file = actions_dir / f"actions_{timestamp}.log"
+        else:
+            # Legacy support for custom log file paths
+            self.transcript_file = Path(log_file)
+            self.actions_file = Path(log_file).parent / f"actions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+            self.transcript_file.parent.mkdir(parents=True, exist_ok=True)
+            self.actions_file.parent.mkdir(parents=True, exist_ok=True)
         
-        self.log_file = Path(log_file)
-        self.log_file.parent.mkdir(parents=True, exist_ok=True)
+        # Write headers to log files
+        self._log_to_transcript(f"=== AI Agent Conversation Log Started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n")
+        self._log_to_transcript(f"Provider: {self.provider}, Model: {self.model}\n\n")
         
-        # Write header to log file
-        self._log_to_file(f"=== AI Agent Conversation Log Started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n")
-        self._log_to_file(f"Provider: {self.provider}, Model: {self.model}\n\n")
+        self._log_to_actions(f"=== AI Agent Actions Log Started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n")
+        self._log_to_actions(f"Provider: {self.provider}, Model: {self.model}\n\n")
         
         self.tools = [
             {
@@ -222,12 +239,28 @@ class AIAgent:
 **IMPORTANT:** If a sudo command fails because passwordless sudo isn't configured, inform the user they need to configure passwordless sudo or run the command manually."""
 
     def _log_to_file(self, message):
-        """Write a message to the conversation log file"""
+        """Write a message to the conversation log file (legacy support)"""
         try:
-            with open(self.log_file, 'a', encoding='utf-8') as f:
+            with open(self.transcript_file, 'a', encoding='utf-8') as f:
                 f.write(message)
         except Exception as e:
-            logger.error(f"Failed to write to log file: {e}")
+            logger.error(f"Failed to write to transcript file: {e}")
+    
+    def _log_to_transcript(self, message):
+        """Write a message to the transcript log file"""
+        try:
+            with open(self.transcript_file, 'a', encoding='utf-8') as f:
+                f.write(message)
+        except Exception as e:
+            logger.error(f"Failed to write to transcript file: {e}")
+    
+    def _log_to_actions(self, message):
+        """Write a message to the actions log file"""
+        try:
+            with open(self.actions_file, 'a', encoding='utf-8') as f:
+                f.write(message)
+        except Exception as e:
+            logger.error(f"Failed to write to actions file: {e}")
     
     def execute_tool(self, tool_name, tool_input):
         """Execute a tool and return the result"""
@@ -253,7 +286,16 @@ class AIAgent:
                     "stderr": result.stderr,
                     "exit_code": result.returncode
                 }
-                self._log_to_file(f"TOOL: {tool_name}\n  Input: {json.dumps(tool_input)}\n  Result: {json.dumps(output)}\n")
+                # Log to transcript (conversation history)
+                self._log_to_transcript(f"TOOL: {tool_name}\n  Input: {json.dumps(tool_input)}\n  Result: {json.dumps(output)}\n")
+                # Log to actions (command execution details)
+                self._log_to_actions(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] COMMAND: {tool_input['command']}\n")
+                self._log_to_actions(f"  Exit Code: {result.returncode}\n")
+                if result.stdout:
+                    self._log_to_actions(f"  Output: {result.stdout}\n")
+                if result.stderr:
+                    self._log_to_actions(f"  Error: {result.stderr}\n")
+                self._log_to_actions(f"\n")
                 return output
             
             elif tool_name == "read_file":
@@ -262,7 +304,11 @@ class AIAgent:
                 with open(path, 'r') as f:
                     content = f.read()
                 output = {"content": content, "path": path}
-                self._log_to_file(f"TOOL: {tool_name}\n  Input: {json.dumps(tool_input)}\n  Result: {{\"path\": \"{path}\", \"content_length\": {len(content)}}}\n")
+                # Log to transcript
+                self._log_to_transcript(f"TOOL: {tool_name}\n  Input: {json.dumps(tool_input)}\n  Result: {{\"path\": \"{path}\", \"content_length\": {len(content)}}}\n")
+                # Log to actions
+                self._log_to_actions(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] FILE_READ: {path}\n")
+                self._log_to_actions(f"  Content Length: {len(content)} characters\n\n")
                 return output
             
             elif tool_name == "write_file":
@@ -272,7 +318,12 @@ class AIAgent:
                 with open(path, 'w') as f:
                     f.write(tool_input["content"])
                 output = {"success": True, "path": path}
-                self._log_to_file(f"TOOL: {tool_name}\n  Input: {{\"path\": \"{path}\", \"content_length\": {len(tool_input['content'])}}}\n  Result: {json.dumps(output)}\n")
+                # Log to transcript
+                self._log_to_transcript(f"TOOL: {tool_name}\n  Input: {{\"path\": \"{path}\", \"content_length\": {len(tool_input['content'])}}}\n  Result: {json.dumps(output)}\n")
+                # Log to actions
+                self._log_to_actions(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] FILE_WRITE: {path}\n")
+                self._log_to_actions(f"  Content Length: {len(tool_input['content'])} characters\n")
+                self._log_to_actions(f"  Success: {output['success']}\n\n")
                 return output
             
             elif tool_name == "list_directory":
@@ -284,7 +335,12 @@ class AIAgent:
                     text=True
                 )
                 output = {"listing": result.stdout, "stderr": result.stderr, "exit_code": result.returncode}
-                self._log_to_file(f"TOOL: {tool_name}\n  Input: {json.dumps(tool_input)}\n  Result: {{\"exit_code\": {result.returncode}, \"items\": {len(result.stdout.splitlines())}}}\n")
+                # Log to transcript
+                self._log_to_transcript(f"TOOL: {tool_name}\n  Input: {json.dumps(tool_input)}\n  Result: {{\"exit_code\": {result.returncode}, \"items\": {len(result.stdout.splitlines())}}}\n")
+                # Log to actions
+                self._log_to_actions(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] DIRECTORY_LIST: {path}\n")
+                self._log_to_actions(f"  Items Found: {len(result.stdout.splitlines())}\n")
+                self._log_to_actions(f"  Exit Code: {result.returncode}\n\n")
                 return output
             
             elif tool_name == "search_files":
@@ -300,7 +356,12 @@ class AIAgent:
                 logger.info(f"Searching: {cmd}")
                 result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
                 output = {"results": result.stdout}
-                self._log_to_file(f"TOOL: {tool_name}\n  Input: {json.dumps(tool_input)}\n  Result: {{\"matches\": {len(result.stdout.splitlines())}}}\n")
+                # Log to transcript
+                self._log_to_transcript(f"TOOL: {tool_name}\n  Input: {json.dumps(tool_input)}\n  Result: {{\"matches\": {len(result.stdout.splitlines())}}}\n")
+                # Log to actions
+                self._log_to_actions(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] SEARCH: {search_type} for '{pattern}' in {path}\n")
+                self._log_to_actions(f"  Command: {cmd}\n")
+                self._log_to_actions(f"  Matches Found: {len(result.stdout.splitlines())}\n\n")
                 return output
         
         except subprocess.TimeoutExpired:
@@ -311,7 +372,7 @@ class AIAgent:
     
     def chat(self, user_message):
         """Send a message and get response with tool execution"""
-        self._log_to_file(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] USER: {user_message}\n")
+        self._log_to_transcript(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] USER: {user_message}\n")
         
         self.conversation_history.append({
             "role": "user",
@@ -381,7 +442,7 @@ class AIAgent:
                 
                 if response_text:
                     logger.info(f"Agent response: {response_text[:100]}...")
-                    self._log_to_file(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] AGENT: {response_text}\n")
+                    self._log_to_transcript(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] AGENT: {response_text}\n")
                 
                 return response_text if response_text else "Task completed"
             
@@ -394,7 +455,7 @@ class AIAgent:
                         tool_input = content_block.input
                         
                         logger.info(f"Executing tool: {tool_name}")
-                        self._log_to_file(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] TOOL: {tool_name}\n")
+                        self._log_to_transcript(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] TOOL: {tool_name}\n")
                         self._log_to_file(f"  Input: {json.dumps(tool_input, indent=2)}\n")
                         
                         result = self.execute_tool(tool_name, tool_input)
@@ -445,7 +506,7 @@ class AIAgent:
             })
             
             logger.info(f"Agent response: {response_text[:100]}...")
-            self._log_to_file(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] AGENT: {response_text}\n")
+            self._log_to_transcript(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] AGENT: {response_text}\n")
             
             return response_text
             
@@ -510,7 +571,7 @@ class AIAgent:
                         tool_input = json.loads(tool_call.function.arguments)
                         
                         logger.info(f"Executing tool: {tool_name}")
-                        self._log_to_file(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] TOOL: {tool_name}\n")
+                        self._log_to_transcript(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] TOOL: {tool_name}\n")
                         self._log_to_file(f"  Input: {json.dumps(tool_input, indent=2)}\n")
                         
                         result = self.execute_tool(tool_name, tool_input)
@@ -527,7 +588,7 @@ class AIAgent:
                     response_text = message.content or ""
                     if response_text:
                         logger.info(f"Agent response: {response_text[:100]}...")
-                        self._log_to_file(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] AGENT: {response_text}\n")
+                        self._log_to_transcript(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] AGENT: {response_text}\n")
                     return response_text if response_text else "Task completed"
                     
             except Exception as e:
@@ -544,7 +605,7 @@ class AIAgent:
         """Clear conversation history"""
         self.conversation_history = []
         logger.info("Conversation reset")
-        self._log_to_file(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] === CONVERSATION RESET ===\n")
+        self._log_to_transcript(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] === CONVERSATION RESET ===\n")
     
     def switch_provider(self, new_provider, new_model=None):
         """Switch to a different LLM provider"""
@@ -583,7 +644,7 @@ class AIAgent:
             
             logger.info(f"Switched from {old_provider} to {self.provider}")
             logger.info(f"Model: {self.model}")
-            self._log_to_file(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] === PROVIDER SWITCHED: {old_provider} -> {self.provider} (Model: {self.model}) ===\n")
+            self._log_to_transcript(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] === PROVIDER SWITCHED: {old_provider} -> {self.provider} (Model: {self.model}) ===\n")
             
             return True
             
@@ -628,7 +689,8 @@ if __name__ == "__main__":
     print("  - Type your message to interact with the agent")
     print("  - Type 'exit' or 'quit' to stop")
     print("  - Type 'reset' to clear conversation history")
-    print(f"\nLogs: {agent.log_file}")
+    print(f"\nTranscripts: {agent.transcript_file}")
+    print(f"Actions: {agent.actions_file}")
     print("\n" + "=" * 60 + "\n")
     
     while True:

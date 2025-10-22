@@ -1,0 +1,50 @@
+# Environment variables and secrets
+.env
+.env.local
+.env.production
+.env.staging
+
+# API Keys and credentials
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Logs and sensitive data
+logs/
+*.log
+memories.txt
+pihole-alert-state
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+backups/
+*.backup
+*.bak
+
+# Temporary files
+tmp/
+temp/
+*.tmp

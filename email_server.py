@@ -49,12 +49,8 @@ class EmailAIServer:
         # Agent instance
         api_key = os.getenv('ANTHROPIC_API_KEY')
         
-        # Create log file for email interactions
-        log_dir = Path.home() / "ai-agent-logs"
-        log_dir.mkdir(exist_ok=True)
-        log_file = log_dir / f"email_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-        
-        self.agent = AIAgent(api_key=api_key, log_file=log_file)
+        # Create agent - it will automatically use the new logging structure
+        self.agent = AIAgent(api_key=api_key)
         
         # Track processed message IDs
         self.processed_ids = set()

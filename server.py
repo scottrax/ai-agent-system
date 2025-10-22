@@ -5,12 +5,13 @@ import logging
 import asyncio
 from agent import AIAgent
 import json
-from typing import Dict
+from typing import Dict, List
 import uuid
 from datetime import datetime
 from pathlib import Path
 import os
 from secrets import compare_digest
+import shutil
 
 # Load environment variables from .env file
 from dotenv import load_dotenv
@@ -138,6 +139,196 @@ async def get_session_info(session_id: str):
             "error": "Session not found"
         }
 
+@app.get("/api/chat-history")
+async def get_chat_history():
+    """Get list of available chat histories"""
+    try:
+        logs_dir = Path("logs/transcripts")
+        if not logs_dir.exists():
+            return {"success": True, "chats": []}
+        
+        chat_files = []
+        for file_path in logs_dir.glob("conversation_*.log"):
+            try:
+                # Extract timestamp from filename
+                filename = file_path.name
+                timestamp_str = filename.replace("conversation_", "").replace(".log", "")
+                
+                # Parse timestamp
+                timestamp = datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S")
+                
+                # Get file stats
+                stat = file_path.stat()
+                
+                # Read file and extract meaningful preview
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    
+                # Extract actual conversation content for preview
+                lines = content.split('\n')
+                conversation_lines = []
+                
+                for line in lines:
+                    line = line.strip()
+                    if (line.startswith('[') and '] USER:' in line) or \
+                       (line.startswith('[') and '] AGENT:' in line) or \
+                       line.startswith('User: ') or line.startswith('Assistant: '):
+                        conversation_lines.append(line)
+                        if len(conversation_lines) >= 3:  # Get first 3 conversation exchanges
+                            break
+                
+                if conversation_lines:
+                    preview = " | ".join(conversation_lines[:3])
+                    if len(preview) > 200:
+                        preview = preview[:200] + "..."
+                else:
+                    preview = "No conversation content found"
+                
+                chat_files.append({
+                    "id": filename,
+                    "filename": filename,
+                    "timestamp": timestamp.isoformat(),
+                    "size": stat.st_size,
+                    "preview": preview[:200] + "..." if len(preview) > 200 else preview,
+                    "created": datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                    "modified": datetime.fromtimestamp(stat.st_mtime).isoformat()
+                })
+            except Exception as e:
+                logger.warning(f"Error reading chat file {file_path}: {e}")
+                continue
+        
+        # Sort by timestamp (newest first)
+        chat_files.sort(key=lambda x: x["timestamp"], reverse=True)
+        
+        return {"success": True, "chats": chat_files}
+    except Exception as e:
+        logger.error(f"Error getting chat history: {e}")
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/chat-history/{chat_id}")
+async def get_chat_content(chat_id: str):
+    """Get full content of a specific chat"""
+    try:
+        logs_dir = Path("logs/transcripts")
+        file_path = logs_dir / chat_id
+        
+        if not file_path.exists():
+            return {"success": False, "error": "Chat not found"}
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        return {"success": True, "content": content}
+    except Exception as e:
+        logger.error(f"Error reading chat {chat_id}: {e}")
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/chat-history/{chat_id}/load")
+async def load_chat_history(chat_id: str, session_id: str = None):
+    """Load a specific chat history into a session"""
+    try:
+        if not session_id or session_id not in agents:
+            return {"success": False, "error": "Invalid session"}
+        
+        agent = agents[session_id]
+        
+        # Get chat content
+        logs_dir = Path("logs/transcripts")
+        file_path = logs_dir / chat_id
+        
+        if not file_path.exists():
+            return {"success": False, "error": "Chat not found"}
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Parse the conversation from the log file
+        conversation = []
+        lines = content.split('\n')
+        current_message = None
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Check for user messages
+            if line.startswith('[') and '] USER:' in line:
+                # Save previous message if exists
+                if current_message:
+                    conversation.append(current_message)
+                
+                # Extract user message
+                user_msg = line.split('] USER: ', 1)[1]
+                current_message = {"role": "user", "content": user_msg}
+                
+            # Check for agent messages
+            elif line.startswith('[') and '] AGENT:' in line:
+                # Save previous message if exists
+                if current_message:
+                    conversation.append(current_message)
+                
+                # Extract agent message
+                agent_msg = line.split('] AGENT: ', 1)[1]
+                current_message = {"role": "assistant", "content": agent_msg}
+                
+            # Check for alternative format (User: / Assistant:)
+            elif line.startswith('User: '):
+                if current_message:
+                    conversation.append(current_message)
+                user_msg = line.replace('User: ', '')
+                current_message = {"role": "user", "content": user_msg}
+                
+            elif line.startswith('Assistant: '):
+                if current_message:
+                    conversation.append(current_message)
+                agent_msg = line.replace('Assistant: ', '')
+                current_message = {"role": "assistant", "content": agent_msg}
+                
+            # Continue building current message if it's a continuation line
+            elif current_message and not line.startswith('[') and not line.startswith('User:') and not line.startswith('Assistant:'):
+                # This is a continuation of the current message
+                current_message["content"] += "\n" + line
+        
+        # Add the last message if exists
+        if current_message:
+            conversation.append(current_message)
+        
+        # Load conversation into agent
+        agent.conversation_history = conversation
+        
+        return {
+            "success": True, 
+            "message": f"Loaded {len(conversation)} messages from chat history",
+            "conversation_length": len(conversation)
+        }
+    except Exception as e:
+        logger.error(f"Error loading chat {chat_id}: {e}")
+        return {"success": False, "error": str(e)}
+
+@app.delete("/api/chat-history/{chat_id}")
+async def delete_chat_history(chat_id: str):
+    """Delete a specific chat history"""
+    try:
+        logs_dir = Path("logs/transcripts")
+        file_path = logs_dir / chat_id
+        
+        if not file_path.exists():
+            return {"success": False, "error": "Chat not found"}
+        
+        # Also try to delete corresponding actions file
+        actions_dir = Path("logs/actions")
+        actions_file = actions_dir / chat_id.replace("conversation_", "actions_")
+        if actions_file.exists():
+            actions_file.unlink()
+        
+        file_path.unlink()
+        
+        return {"success": True, "message": "Chat deleted successfully"}
+    except Exception as e:
+        logger.error(f"Error deleting chat {chat_id}: {e}")
+        return {"success": False, "error": str(e)}
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time agent communication"""
@@ -152,16 +343,15 @@ async def websocket_endpoint(websocket: WebSocket):
     logger.info(f"New WebSocket connection: {session_id}")
     
     # Create agent with session-specific log file
-    log_dir = Path.home() / "ai-agent-logs"
-    log_file = log_dir / f"web_session_{session_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-    
-    agent = AIAgent(api_key=API_KEY, log_file=log_file)
+    # The agent will automatically create logs in the project's logs directory
+    agent = AIAgent(api_key=API_KEY)
     agents[session_id] = agent
     
     try:
         await websocket.send_json({
             "type": "system",
-            "content": "Connected to AI Agent. How can I help you?"
+            "content": "Connected to AI Agent. How can I help you?",
+            "session_id": session_id
         })
         
         while True:
@@ -183,6 +373,106 @@ async def websocket_endpoint(websocket: WebSocket):
                     "content": "Conversation reset"
                 })
                 continue
+            
+            # Handle chat loading commands
+            if data.startswith('/load_chat '):
+                chat_id = data.replace('/load_chat ', '').strip()
+                try:
+                    # Get chat content
+                    logs_dir = Path("logs/transcripts")
+                    file_path = logs_dir / chat_id
+                    
+                    if not file_path.exists():
+                        await websocket.send_json({
+                            "type": "error",
+                            "content": f"Chat {chat_id} not found"
+                        })
+                        continue
+                    
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    
+                    # Parse the conversation from the log file
+                    conversation = []
+                    lines = content.split('\n')
+                    current_message = None
+                    
+                    for line in lines:
+                        line = line.strip()
+                        if not line:
+                            continue
+                            
+                        # Check for user messages
+                        if line.startswith('[') and '] USER:' in line:
+                            # Save previous message if exists
+                            if current_message:
+                                conversation.append(current_message)
+                            
+                            # Extract user message
+                            user_msg = line.split('] USER: ', 1)[1]
+                            current_message = {"role": "user", "content": user_msg}
+                            
+                        # Check for agent messages
+                        elif line.startswith('[') and '] AGENT:' in line:
+                            # Save previous message if exists
+                            if current_message:
+                                conversation.append(current_message)
+                            
+                            # Extract agent message
+                            agent_msg = line.split('] AGENT: ', 1)[1]
+                            current_message = {"role": "assistant", "content": agent_msg}
+                            
+                        # Check for alternative format (User: / Assistant:)
+                        elif line.startswith('User: '):
+                            if current_message:
+                                conversation.append(current_message)
+                            user_msg = line.replace('User: ', '')
+                            current_message = {"role": "user", "content": user_msg}
+                            
+                        elif line.startswith('Assistant: '):
+                            if current_message:
+                                conversation.append(current_message)
+                            agent_msg = line.replace('Assistant: ', '')
+                            current_message = {"role": "assistant", "content": agent_msg}
+                            
+                        # Continue building current message if it's a continuation line
+                        elif current_message and not line.startswith('[') and not line.startswith('User:') and not line.startswith('Assistant:'):
+                            # This is a continuation of the current message
+                            current_message["content"] += "\n" + line
+                    
+                    # Add the last message if exists
+                    if current_message:
+                        conversation.append(current_message)
+                    
+                    # Load conversation into agent
+                    agent.conversation_history = conversation
+                    
+                    # Send each message from the loaded conversation to display in UI
+                    for msg in conversation:
+                        if msg["role"] == "user":
+                            await websocket.send_json({
+                                "type": "message",
+                                "content": msg["content"],
+                                "role": "user"
+                            })
+                        elif msg["role"] == "assistant":
+                            await websocket.send_json({
+                                "type": "message", 
+                                "content": msg["content"],
+                                "role": "assistant"
+                            })
+                    
+                    await websocket.send_json({
+                        "type": "system",
+                        "content": f"Loaded {len(conversation)} messages from chat history"
+                    })
+                    continue
+                except Exception as e:
+                    await websocket.send_json({
+                        "type": "error",
+                        "content": f"Error loading chat: {str(e)}"
+                    })
+                    continue
             
             # Send processing status
             await websocket.send_json({

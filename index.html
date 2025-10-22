@@ -18,6 +18,195 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
+            margin: 0;
+            padding: 0;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #161b22;
+            border-right: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: #c9d1d9;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .sidebar-toggle:hover {
+            background: #30363d;
+        }
+
+        .chat-search {
+            padding: 1rem;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .chat-search input {
+            width: 100%;
+            padding: 0.5rem;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            color: #c9d1d9;
+            font-size: 0.875rem;
+        }
+
+        .chat-search input:focus {
+            outline: none;
+            border-color: #1f6feb;
+        }
+
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .chat-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .chat-item:hover {
+            background: #21262d;
+            border-color: #1f6feb;
+        }
+
+        .chat-item.selected {
+            background: #1f6feb;
+            border-color: #1f6feb;
+        }
+
+        .chat-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .chat-item-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #c9d1d9;
+        }
+
+        .chat-item-date {
+            font-size: 0.75rem;
+            color: #8b949e;
+        }
+
+        .chat-item-preview {
+            font-size: 0.75rem;
+            color: #8b949e;
+            line-height: 1.4;
+            max-height: 2.8rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .chat-item-actions {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            display: flex;
+            gap: 0.25rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .chat-item:hover .chat-item-actions {
+            opacity: 1;
+        }
+
+        .chat-item-action {
+            background: #21262d;
+            border: none;
+            color: #c9d1d9;
+            padding: 0.25rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: background 0.2s;
+        }
+
+        .chat-item-action:hover {
+            background: #30363d;
+        }
+
+        .chat-item-action.delete:hover {
+            background: #f85149;
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .sidebar-overlay.visible {
+            display: block;
+        }
+
+        .chat-item-placeholder {
+            text-align: center;
+            color: #8b949e;
+            font-style: italic;
+            padding: 2rem;
         }
 
         #header {
@@ -27,6 +216,27 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sidebar-toggle-main {
+            background: none;
+            border: none;
+            color: #c9d1d9;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-toggle-main:hover {
+            background: #30363d;
         }
 
         .header-controls {
@@ -284,40 +494,81 @@
             .provider-selector select {
                 min-width: 100px;
             }
+
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                z-index: 1001;
+            }
+
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="header">
-        <h1>
-            <span>🤖</span>
-            <span>AI Computer Agent</span>
-        </h1>
-        <div class="header-controls">
-            <div class="provider-selector">
-                <label for="provider-select">Provider:</label>
-                <select id="provider-select" disabled>
-                    <option value="">Loading...</option>
-                </select>
-                <label for="model-select">Model:</label>
-                <select id="model-select" disabled>
-                    <option value="">Select provider first</option>
-                </select>
-                <button id="switch-provider-btn" disabled>Switch</button>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>Chat History</h3>
+                <button class="sidebar-toggle" id="sidebar-toggle">×</button>
             </div>
-            <div class="status">
-                <div class="status-dot disconnected" id="status-dot"></div>
-                <span id="status-text">Connecting...</span>
+            <div class="chat-search">
+                <input type="text" id="chat-search" placeholder="Search chats..." />
+            </div>
+            <div class="chat-list" id="chat-list">
+                <div class="chat-item-placeholder">Loading chat history...</div>
             </div>
         </div>
-    </div>
-    
-    <div id="messages"></div>
-    
-    <div id="input-area">
-        <button id="reset-btn" title="Reset conversation">Reset</button>
-        <input type="text" id="input" placeholder="Ask your AI to do something on the server..." disabled />
-        <button id="send" disabled>Send</button>
+
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div id="header">
+                <div class="header-left">
+                    <button class="sidebar-toggle-main" id="sidebar-toggle-main">☰</button>
+                    <h1>
+                        <span>🤖</span>
+                        <span>AI Computer Agent</span>
+                    </h1>
+                </div>
+                <div class="header-controls">
+                    <div class="provider-selector">
+                        <label for="provider-select">Provider:</label>
+                        <select id="provider-select" disabled>
+                            <option value="">Loading...</option>
+                        </select>
+                        <label for="model-select">Model:</label>
+                        <select id="model-select" disabled>
+                            <option value="">Select provider first</option>
+                        </select>
+                        <button id="switch-provider-btn" disabled>Switch</button>
+                    </div>
+                    <div class="status">
+                        <div class="status-dot disconnected" id="status-dot"></div>
+                        <span id="status-text">Connecting...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="messages"></div>
+            
+            <div id="input-area">
+                <button id="reset-btn" title="Reset conversation">Reset</button>
+                <input type="text" id="input" placeholder="Ask your AI to do something on the server..." disabled />
+                <button id="send" disabled>Send</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -326,6 +577,9 @@
         let isConnected = false;
         let availableProviders = {};
         let currentProviderInfo = null;
+        let chatHistory = [];
+        let filteredChats = [];
+        let selectedChatId = null;
         
         const messages = document.getElementById('messages');
         const input = document.getElementById('input');
@@ -336,6 +590,14 @@
         const providerSelect = document.getElementById('provider-select');
         const modelSelect = document.getElementById('model-select');
         const switchProviderBtn = document.getElementById('switch-provider-btn');
+        
+        // Sidebar elements
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebarToggleMain = document.getElementById('sidebar-toggle-main');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const chatList = document.getElementById('chat-list');
+        const chatSearch = document.getElementById('chat-search');
 
         async function loadProviders() {
             try {
@@ -454,12 +716,25 @@
                 const data = JSON.parse(event.data);
                 
                 if (data.type === 'message') {
-                    addMessage(data.content, 'agent');
+                    // Check if message has role information (for loaded chat history)
+                    if (data.role === 'user') {
+                        addMessage(data.content, 'user');
+                    } else if (data.role === 'assistant') {
+                        addMessage(data.content, 'agent');
+                    } else {
+                        // Default to agent message for backward compatibility
+                        addMessage(data.content, 'agent');
+                    }
                     sendBtn.disabled = false;
                     input.disabled = false;
                     input.focus();
                 } else if (data.type === 'system') {
                     addMessage(data.content, 'system');
+                    
+                    // Store session ID if provided
+                    if (data.session_id) {
+                        sessionId = data.session_id;
+                    }
                     
                     // Update provider info if available
                     if (data.provider_info) {
@@ -509,12 +784,18 @@
             input.value = '';
             sendBtn.disabled = true;
             input.disabled = true;
+            
+            // Clear selected chat when starting new conversation
+            selectedChatId = null;
+            renderChatList();
         }
 
         function reset() {
             if (!isConnected) return;
             ws.send('reset');
             messages.innerHTML = '';
+            selectedChatId = null;
+            renderChatList(); // Update sidebar to show no selection
         }
 
         function updateProviderDisplay() {
@@ -547,9 +828,156 @@
             }
         };
 
-        // Load providers and connect on load
+        // Sidebar functionality
+        function toggleSidebar() {
+            sidebar.classList.toggle('collapsed');
+            if (window.innerWidth <= 768) {
+                sidebarOverlay.classList.toggle('visible');
+            }
+        }
+
+        function closeSidebar() {
+            sidebar.classList.add('collapsed');
+            sidebarOverlay.classList.remove('visible');
+        }
+
+        // Chat history management
+        async function loadChatHistory() {
+            try {
+                const response = await fetch('/api/chat-history');
+                const data = await response.json();
+                
+                if (data.success) {
+                    chatHistory = data.chats;
+                    filteredChats = [...chatHistory];
+                    renderChatList();
+                } else {
+                    console.error('Failed to load chat history:', data.error);
+                    chatList.innerHTML = '<div class="chat-item-placeholder">Error loading chat history</div>';
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+                chatList.innerHTML = '<div class="chat-item-placeholder">Error loading chat history</div>';
+            }
+        }
+
+        function renderChatList() {
+            if (filteredChats.length === 0) {
+                chatList.innerHTML = '<div class="chat-item-placeholder">No chat history found</div>';
+                return;
+            }
+
+            chatList.innerHTML = '';
+            filteredChats.forEach(chat => {
+                const chatItem = document.createElement('div');
+                chatItem.className = 'chat-item';
+                if (selectedChatId === chat.id) {
+                    chatItem.classList.add('selected');
+                }
+
+                const date = new Date(chat.timestamp);
+                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+
+                chatItem.innerHTML = `
+                    <div class="chat-item-header">
+                        <div class="chat-item-title">Chat ${date.toLocaleDateString()}</div>
+                        <div class="chat-item-date">${formattedDate}</div>
+                    </div>
+                    <div class="chat-item-preview">${chat.preview}</div>
+                    <div class="chat-item-actions">
+                        <button class="chat-item-action load" onclick="loadChat('${chat.id}')">Load</button>
+                        <button class="chat-item-action delete" onclick="deleteChat('${chat.id}')">Delete</button>
+                    </div>
+                `;
+
+                chatItem.onclick = (e) => {
+                    if (!e.target.classList.contains('chat-item-action')) {
+                        loadChat(chat.id);
+                    }
+                };
+
+                chatList.appendChild(chatItem);
+            });
+        }
+
+        function filterChats(searchTerm) {
+            if (!searchTerm.trim()) {
+                filteredChats = [...chatHistory];
+            } else {
+                filteredChats = chatHistory.filter(chat => 
+                    chat.preview.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    chat.filename.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+            }
+            renderChatList();
+        }
+
+        async function loadChat(chatId) {
+            if (!isConnected) {
+                addMessage('Not connected to server', 'error');
+                return;
+            }
+
+            try {
+                selectedChatId = chatId;
+                renderChatList(); // Update UI to show selected chat
+                
+                // Send load command to WebSocket
+                ws.send(`/load_chat ${chatId}`);
+                closeSidebar();
+            } catch (error) {
+                console.error('Error loading chat:', error);
+                addMessage('Error loading chat', 'error');
+            }
+        }
+
+        async function deleteChat(chatId) {
+            if (!confirm('Are you sure you want to delete this chat?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/chat-history/${chatId}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    // Remove from local arrays
+                    chatHistory = chatHistory.filter(chat => chat.id !== chatId);
+                    filteredChats = filteredChats.filter(chat => chat.id !== chatId);
+                    
+                    if (selectedChatId === chatId) {
+                        selectedChatId = null;
+                    }
+                    
+                    renderChatList();
+                    addMessage('Chat deleted successfully', 'system');
+                } else {
+                    addMessage(`Error deleting chat: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting chat:', error);
+                addMessage('Error deleting chat', 'error');
+            }
+        }
+
+        // Event listeners
+        sidebarToggle.onclick = toggleSidebar;
+        sidebarToggleMain.onclick = toggleSidebar;
+        sidebarOverlay.onclick = closeSidebar;
+        
+        chatSearch.oninput = (e) => {
+            filterChats(e.target.value);
+        };
+
+        // Load providers, chat history and connect on load
         loadProviders();
+        loadChatHistory();
         connect();
+        
+        // Refresh chat history every 30 seconds
+        setInterval(loadChatHistory, 30000);
     </script>
 </body>
 </html>
