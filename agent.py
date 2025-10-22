@@ -374,6 +374,22 @@ class AIAgent:
         """Send a message and get response with tool execution"""
         self._log_to_transcript(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] USER: {user_message}\n")
         
+        # Check if this is a system information request that needs fresh data
+        system_info_keywords = [
+            'disk space', 'free space', 'disk usage', 'disk space usage',
+            'memory usage', 'memory', 'ram', 'available memory',
+            'running processes', 'processes', 'what processes',
+            'network status', 'network', 'ports', 'listening ports',
+            'service status', 'services', 'system status'
+        ]
+        
+        is_system_info_request = any(keyword in user_message.lower() for keyword in system_info_keywords)
+        
+        if is_system_info_request:
+            # Clear conversation history for system info requests to ensure fresh data
+            logger.info("System information request detected - clearing conversation history for fresh data")
+            self.conversation_history = []
+        
         self.conversation_history.append({
             "role": "user",
             "content": user_message
