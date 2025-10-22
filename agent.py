@@ -216,7 +216,7 @@ class AIAgent:
                         },
                         "model": {
                             "type": "string",
-                            "description": "Optional: specific model to use (e.g., 'claude-3-5-sonnet-20241022', 'gemini-2.0-flash-exp', 'llama3.1')"
+                            "description": "Optional: specific model to use. Anthropic: 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-sonnet-4-5', 'claude-haiku-4-5', 'claude-opus-4-5'. Gemini: 'gemini-2.0-flash-exp', 'gemini-1.5-pro'. Ollama: 'llama3.1', 'codellama', 'mistral', 'phi3'"
                         }
                     },
                     "required": ["provider"]

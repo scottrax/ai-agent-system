@@ -80,7 +80,7 @@ async def get_available_providers():
             "anthropic": {
                 "name": "Anthropic Claude",
                 "available": bool(os.getenv("ANTHROPIC_API_KEY")),
-                "models": ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"]
+                "models": ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-sonnet-4-5", "claude-haiku-4-5", "claude-opus-4-5", "claude-3-opus-20240229"]
             },
             "gemini": {
                 "name": "Google Gemini",
