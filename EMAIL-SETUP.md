@@ -47,7 +47,7 @@ Add these lines:
 ```bash
 # Email server configuration
 EMAIL_ADDRESS=myserver2025@gmail.com
-EMAIL_PASSWORD=abcd efgh ijkl mnop  # Your 16-char app password
+EMAIL_PASSWORD=abcd efghijklmnop  # Your 16-char app password
 AUTHORIZED_EMAILS=your.personal@gmail.com,work@company.com
 
 # AI configuration (same as before)
